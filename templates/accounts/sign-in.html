@@ -1,0 +1,107 @@
+{% load static %}
+<!doctype html>
+<html lang="en" dir="rtl">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>وب اوپس کتابخانه شما</title>
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}"/>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <!-- Typography CSS -->
+    <link rel="stylesheet" href="{% static 'css/typography.css' %}">
+    <!-- Style CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
+    <link href="{% static 'css/remixicon.css' %}" rel="stylesheet">
+</head>
+<body>
+<!-- loader Start -->
+<div id="loading">
+    <div id="loading-center">
+    </div>
+</div>
+<!-- loader END -->
+<!-- Sign in Start -->
+<section class="sign-in-page">
+    <div class="container p-0">
+        <div class="row no-gutters height-self-center">
+            <div class="col-sm-12 align-self-center page-content rounded">
+                <div class="row m-0">
+                    <div class="col-sm-12 sign-in-page-data">
+                        <div class="sign-in-from bg-primary rounded">
+                            <h3 class="mb-0 text-center text-white">ورود به حساب کاربری</h3>
+                            <p class="text-center text-white">جهت دسترسی به پنل ایمیل و پسوورد خود را وارد نمایید</p>
+                            <form class="mt-4 form-text" action="{% url 'accounts:login' %}" method="post">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1">یوزرنیم یا ایمیل</label>
+                                    <input type="text" class="form-control mb-0" name="username"
+                                           placeholder="یوزرنیم یا ایمیل">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputPassword1">کلمه عبور</label>
+{#                                    <a href="#" class="float-right text-dark">کلمه عبور خود را فراموش کرده اید؟</a>#}
+                                    <input type="password" class="form-control mb-0" name="password"
+                                           placeholder="کلمه عبور">
+                                </div>
+{#                                <div class="d-inline-block w-100">#}
+{#                                    <div class="custom-control custom-checkbox d-inline-block mt-2 pt-1">#}
+{#                                        <label class="custom-control-label" for="remember_me">مرا به خاطر داشته باش</label>#}
+{#                                        <input type="checkbox" class="custom-control-input" id="remember_me" name="remember_me">#}
+{#                                    </div>#}
+{#                                </div>#}
+                                <div class="sign-info text-center">
+                                    <button type="submit" class="btn btn-white d-block w-100 mb-2">ورود</button>
+                                    <span class="text-dark dark-color d-inline-block line-height-2">آیا حساب کاربری ندارید؟ <a
+                                            href="{% url 'accounts:signup' %}" class="text-white">ساخت حساب کاربری</a></span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Sign in END -->
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/popper.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+<!-- Appear JavaScript -->
+<script src="{% static 'js/jquery.appear.js' %}"></script>
+<!-- Countdown JavaScript -->
+<script src="{% static 'js/countdown.min.js' %}"></script>
+<!-- Counterup JavaScript -->
+<script src="{% static 'js/waypoints.min.js' %}"></script>
+<script src="{% static 'js/jquery.counterup.min.js' %}"></script>
+<!-- Wow JavaScript -->
+<script src="{% static 'js/wow.min.js' %}"></script>
+<!-- Apexcharts JavaScript -->
+<script src="{% static 'js/apexcharts.js' %}"></script>
+<!-- lottie JavaScript -->
+<script src="{% static 'js/lottie.js' %}"></script>
+<!-- Slick JavaScript -->
+<script src="{% static 'js/slick.min.js' %}"></script>
+<!-- Select2 JavaScript -->
+<script src="{% static 'js/select2.min.js' %}"></script>
+<!-- Owl Carousel JavaScript -->
+<script src="{% static 'js/owl.carousel.min.js' %}"></script>
+<!-- Magnific Popup JavaScript -->
+<script src="{% static 'js/jquery.magnific-popup.min.js' %}"></script>
+<!-- Smooth Scrollbar JavaScript -->
+<script src="{% static 'js/smooth-scrollbar.js' %}"></script>
+<!-- Style Customizer -->
+<script src="{% static 'js/style-customizer.js' %}"></script>
+<!-- Chart Custom JavaScript -->
+<script src="{% static 'js/chart-custom.js' %}"></script>
+<!-- Custom JavaScript -->
+<script src="{% static 'js/custom.js' %}"></script>
+</body>
+</html>

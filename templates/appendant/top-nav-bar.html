@@ -1,0 +1,288 @@
+{% load static %}
+{% load humanize %}
+<!-- TOP Nav Bar -->
+<div class="iq-top-navbar">
+    <div class="iq-navbar-custom">
+        <nav class="navbar navbar-expand-lg navbar-light p-0">
+            <div class="iq-menu-bt d-flex align-items-center">
+                <div class="wrapper-menu">
+                    <div class="main-circle"><i class="las la-bars"></i></div>
+                </div>
+                <div class="iq-navbar-logo d-flex justify-content-between">
+                    <a href="{% url 'bookshelf:home' %}" class="header-logo">
+                        <img src="{% static 'images/logo.png' %}" class="img-fluid rounded-normal" alt="">
+                        <div class="logo-title">
+                            <span class="text-primary text-uppercase">وب اوپس</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div class="navbar-breadcrumb">
+                <h5 class="mb-0">کتابخانه</h5>
+{#                <nav aria-label="breadcrumb">#}
+{#                    <ul class="breadcrumb">#}
+{#                        <li class="breadcrumb-item"><a href="{% url 'bookshelf:home' %}">صفحه اصلی</a></li>#}
+{#                        <li class="breadcrumb-item active" aria-current="page">صفحه اصلی</li>#}
+{#                    </ul>#}
+{#                </nav>#}
+            </div>
+            <div class="iq-search-bar">
+                <form action="{% url 'bookshelf:categories' %}" method="post" class="searchbox">
+                    {% csrf_token %}
+                    <input id="search_text" name="search_text" type="text" class="text search-input" placeholder="دنبال چه هستید؟">
+                    <a class="search-link" href="#"><i class="ri-search-line"></i></a>
+                </form>
+            </div>
+            <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-label="Toggle navigation">
+                <i class="ri-menu-3-line"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ml-auto navbar-list">
+                    <li class="nav-item nav-icon search-content">
+                        <a href="#" class="search-toggle iq-waves-effect text-gray rounded">
+                            <i class="ri-search-line"></i>
+                        </a>
+                        <form action="#" class="search-box p-0">
+                            <input type="text" class="text search-input" placeholder="Type here to search...">
+                            <a class="search-link" href="#"><i class="ri-search-line"></i></a>
+                        </form>
+                    </li>
+                    <li class="nav-item nav-icon">
+                        <a href="#" class="search-toggle iq-waves-effect text-gray rounded">
+                            <i class="ri-notification-2-line"></i>
+                            {% if user_profile.is_notification_seen %}
+                            <span id="notification-dot" class="bg-primary"></span>
+                            {% else %}
+                                {% if user_profile.notification_box.all.count == 0 %}
+                                <span id="notification-dot" class="bg-primary"></span>
+                                {% else %}
+                                <span id="notification-dot" class="bg-primary dots"></span>
+                                {% endif %}
+                            {% endif %}
+                        </a>
+                        <div class="iq-sub-dropdown">
+                            <div class="iq-card shadow-none m-0">
+                                <div class="iq-card-body p-0">
+                                    <div class="bg-primary p-3">
+                                        <h5 class="mb-0 text-white">اطلاعیه ها
+                                            {% if not user_profile.is_notification_seen %}
+                                                {% if user_profile.notification_box.all.count != 0 %}
+                                                <small id="notification-seen" onclick="ajax_add_notification_to_read_group({{ user_profile.user.id }})"
+                                                    class="badge  badge-light float-right pt-1">دیدم</small>
+                                                {% endif %}
+                                            {% endif %}
+                                        </h5>
+                                    </div>
+                                    {% for notification in user_profile.notification_box.all|slice:":5" %}
+                                    <a href="#" class="iq-sub-card">
+                                        <div class="media align-items-center">
+                                            <div class="">
+                                                <span>{{ forloop.counter }}</span>
+{#                                                <img class="avatar-40 rounded" src="{% static 'images/user/01.jpg' %}"#}
+{#                                                     alt="">#}
+                                            </div>
+                                            <div class="media-body ml-3">
+{#                                                <h6 class="mb-1 ">{{ requset.user.username }}</h6>#}
+
+                                               <small class="float-right font-size-12">{{ notification.notification.time.date }}</small>
+                                                <p class="mb-1">{{ notification.notification.message }}</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    {% empty %}
+                                    <a href="#" class="iq-sub-card">
+                                        <div class="media align-items-center">
+                                            <div class="">
+                                                <span></span>
+                                            </div>
+                                            <div class="media-body ml-3">
+                                                <p class="mb-1">خالی</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item nav-icon dropdown">
+                        <a href="#" class="search-toggle iq-waves-effect text-gray rounded">
+                            <i class="ri-mail-line"></i>
+                            {% if not user_profile.message_box.all.count == 0 %}
+                                {% if user_profile.is_message_seen %}
+                                <span id="message-dot" class="bg-primary"></span>
+                                {% else %}
+                                <span id="message-dot" class="bg-primary dots"></span>
+                                {% endif %}
+                            {% else %}
+                            <span id="message-dot" class="bg-primary"></span>
+                            {% endif %}
+                        </a>
+                        <div class="iq-sub-dropdown">
+                            <div class="iq-card shadow-none m-0">
+                                <div class="iq-card-body p-0 ">
+                                    <div class="bg-primary p-3">
+                                        <h5 class="mb-0 text-white">صندوق پیام
+                                            {% if user_profile.message_box.all.count != 0 %}
+                                                {% if not user_profile.is_message_seen %}
+                                                <small id="message-seen" onclick="ajax_add_message_to_read_group({{ user_profile.user.id }})"
+                                                    class="badge  badge-light float-right pt-1">دیدم</small>
+                                                {% endif %}
+                                            {% endif %}
+                                        </h5>
+                                    </div>
+                                    {% for message in user_profile.message_box.all|slice:":5" %}
+                                    <a href="#" class="iq-sub-card">
+                                        <div class="media align-items-center">
+                                            <div class="">
+                                                <span>{{ forloop.counter }}</span>
+{#                                                <img class="avatar-40 rounded" src="{% static 'images/user/01.jpg' %}"#}
+{#                                                     alt="">#}
+                                            </div>
+                                            <div class="media-body ml-3">
+{#                                                <h6 class="mb-1 ">{{ requset.user.username }}</h6>#}
+
+                                                <small class="float-right font-size-12">{{ message.private_message.time.date }}</small>
+                                                <p class="mb-1">{{ message.private_message.message }}</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    {% empty %}
+                                    <a href="#" class="iq-sub-card">
+                                        <div class="media align-items-center">
+                                            <div class="">
+                                                <span></span>
+                                            </div>
+                                            <div class="media-body ml-3">
+                                                <p class="mb-1">خالی</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="line-height pt-3">
+                        <a href="#" class="search-toggle iq-waves-effect d-flex align-items-center">
+                            <img src="{% static 'images/person.jpg' %}" class="img-fluid rounded-circle mr-3"
+                                 alt="user">
+                            <div class="caption">
+                                <h6 class="mb-1 line-height">{{ request.user.username }}</h6>
+                            </div>
+                        </a>
+                        <div class="iq-sub-dropdown iq-user-dropdown">
+                            <div class="iq-card shadow-none m-0">
+                                <div class="iq-card-body p-0 ">
+                                    <div class="bg-primary p-3">
+                                        {% if request.user.is_staff %}
+                                        <h5 class="mb-0 text-white line-height">{{ request.user.username }}</h5>
+                                        {% else %}
+                                        <h5 class="mb-0 text-white line-height">{{ request.user.username }}</h5>
+                                        {% endif %}
+                                        <span class="text-white font-size-12">خوش آمدید</span>
+                                    </div>
+{#                                    <a href="profile.html" class="iq-sub-card iq-bg-primary-hover">#}
+{#                                        <div class="media align-items-center">#}
+{#                                            <div class="rounded iq-card-icon iq-bg-primary">#}
+{#                                                <i class="ri-file-user-line"></i>#}
+{#                                            </div>#}
+{#                                            <div class="media-body ml-3">#}
+{#                                                <h6 class="mb-0 ">پروفایل من</h6>#}
+{#                                                <p class="mb-0 font-size-12">جزئیات پروفایل شخصیتان را ببینید</p>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    </a>#}
+{#                                    <a href="profile-edit.html" class="iq-sub-card iq-bg-primary-hover">#}
+{#                                        <div class="media align-items-center">#}
+{#                                            <div class="rounded iq-card-icon iq-bg-primary">#}
+{#                                                <i class="ri-profile-line"></i>#}
+{#                                            </div>#}
+{#                                            <div class="media-body ml-3">#}
+{#                                                <h6 class="mb-0 ">ویرایش پروفایل</h6>#}
+{#                                                <p class="mb-0 font-size-12">پروفایل شخصیتان را ویرایش کنید</p>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    </a>#}
+                                    <a href="{% url 'accounts:personal-library' %}" class="iq-sub-card iq-bg-primary-hover">
+                                        <div class="media align-items-center">
+                                            <div class="rounded iq-card-icon iq-bg-primary">
+                                                <i class="ri-file-user-line"></i>
+                                            </div>
+                                            <div class="media-body ml-3">
+                                                <h6 class="mb-0 ">کتابخانه من</h6>
+                                                <p class="mb-0 font-size-12">کتابهای در حال مطالعه</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <a href="{% url 'bookshelf:request_history' %}" class="iq-sub-card iq-bg-primary-hover">
+                                        <div class="media align-items-center">
+                                            <div class="rounded iq-card-icon iq-bg-primary">
+                                                <i class="ri-file-user-line"></i>
+                                            </div>
+                                            <div class="media-body ml-3">
+                                                <h6 class="mb-0 ">درخواست های من</h6>
+                                                <p class="mb-0 font-size-12">سوابق درخواست های خود را ببینید</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <div class="d-inline-block w-100 text-center p-3">
+                                        <a class="bg-primary iq-sign-btn" href="{% url 'accounts:logout' %}" role="button">خروج از حساب<i
+                                                class="ri-login-box-line ml-2"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</div>
+<!-- TOP Nav Bar END -->
+<script>
+    function ajax_add_notification_to_read_group(user_id) {
+        $.ajaxSetup({
+          data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+        });
+        $.ajax({
+            method: 'post',
+            url: "{% url 'accounts:ajax_add_notification_to_read_group' %}",
+            data: {
+                user_id: user_id,
+            },
+            error: function () {
+                console.log("error")
+                alert('نشد! دوباره امتحان کنید')
+            },
+            success: function (data) {
+                console.log("success")
+                document.getElementById("notification-dot").className = "bg-primary";
+                document.getElementById('notification-seen').remove();
+            },
+        })
+    }
+    function ajax_add_message_to_read_group(user_id) {
+        $.ajaxSetup({
+          data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+        });
+        $.ajax({
+            method: 'post',
+            url: "{% url 'accounts:ajax_add_message_to_read_group' %}",
+            data: {
+                user_id: user_id,
+            },
+            error: function () {
+                console.log("error");
+                alert('نشد! دوباره امتحان کنید')
+            },
+            success: function (data) {
+                console.log("success");
+                document.getElementById("message-dot").className = "bg-primary";
+                document.getElementById('message-seen').remove();
+            },
+        })
+    }
+</script>
