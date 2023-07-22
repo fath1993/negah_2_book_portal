@@ -72,7 +72,7 @@ class Book(models.Model):
     keywords = models.ManyToManyField(MagicWord, related_name='magic_word_keywords', blank=True, verbose_name='کلمات کلیدی')
     classification = models.CharField(max_length=255, choices=CLASSIFICATION, null=True, blank=True, verbose_name='رده بندی')
     registration_number = models.PositiveIntegerField(null=True, blank=True, verbose_name='شماره ثبت')
-    version = models.PositiveIntegerField(null=True, blank=True, verbose_name='شماره ثبت')
+    version = models.PositiveIntegerField(null=True, blank=True, verbose_name='شماره نسخه')
     on_paper_image = models.OneToOneField(FileGallery, related_name='on_paper_image', null=True, blank=True,
                                           on_delete=models.SET_NULL, verbose_name='تصویر جلد کتاب')
     book_images = models.ManyToManyField(FileGallery, related_name='book_images', blank=True, verbose_name='سایر تصاویر مرتبط به کتاب')
@@ -105,11 +105,9 @@ class BookProfile(models.Model):
                                       on_delete=models.SET_NULL, null=True, blank=True,
                                       verbose_name='نام گوینده صوتی')
     review = tinymce_models.HTMLField(null=True, blank=True, verbose_name='نقد و بررسی')
-    visited_number = models.PositiveIntegerField(null=True, blank=True, editable=False, verbose_name='دفعات مشاهده')
     visited_by_users = models.ManyToManyField(User, blank=True, related_name='visited_by_users', verbose_name='کاربر های مشاهده کننده')
-    is_physical_available = models.BooleanField(default=False, verbose_name='آیا کتاب به صورتی فیزیکی موجود است؟')
+    number_of_inventory = models.PositiveIntegerField(default=1, null=False, blank=False, verbose_name='تعداد نسخ موجود تحت تملک کتابخانه')
     is_published_on_site = models.BooleanField(default=False, verbose_name='آیا کتاب در سایت ارائه شود؟')
-
 
     def __str__(self):
         return self.book.title

@@ -60,8 +60,6 @@ class PrivateMessage(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=False, blank=False, verbose_name='کاربر')
     profile_image = models.ImageField(upload_to='user_profile_pic', null=True, blank=True, verbose_name='عکس پروفایل')
-    wish_list = models.ManyToManyField(Book, related_name='wish_list', blank=True,
-                                       verbose_name='کتاب های اضافه شده به علاقه مندی ها')
     notification_box = models.ManyToManyField(Notification, blank=True, verbose_name='اطلاعیه ها')
     is_notification_seen = models.BooleanField(default=False, null=False, blank=False, verbose_name='آیا نوتیفیکیشن ها خوانده شد؟')
     message_box = models.ManyToManyField(PrivateMessage, blank=True, verbose_name='پیام ها')
@@ -106,7 +104,7 @@ class SendNotificationThread(threading.Thread):
 
 class UserBookStatus(models.Model):
     user = models.ForeignKey(User, null=False, blank=False, editable=False, on_delete=models.CASCADE, verbose_name='کاربر')
-    book = models.OneToOneField(Book, on_delete=models.CASCADE, null=False, blank=False, editable=False, verbose_name='کتاب')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, null=False, blank=False, editable=False, verbose_name='کتاب')
     is_reading = models.BooleanField(default=False, editable=False, verbose_name='آیا کتاب در حال مطالعه است؟')
     last_page = models.PositiveIntegerField(default=0, null=False, blank=False, editable=False, verbose_name='آخرین صفحه مطالعه شده')
     is_finished = models.BooleanField(default=False, editable=False, verbose_name='آیا خواندن کتاب پایان یافته است؟')
@@ -125,21 +123,14 @@ class UserBookStatus(models.Model):
 
 
 class UserBookAssign(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, verbose_name='کاربر')
     book = models.ForeignKey(Book, on_delete=models.CASCADE, null=False, blank=False, verbose_name='کتاب')
-    borrower = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='قرض گیرنده')
     date_of_assignment = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ واگذاری')
     date_of_return = jmodels.jDateTimeField(null=True, blank=True, verbose_name='تاریخ بازگرداندن')
-    is_this_book_returned = models.BooleanField(default=False, null=False, editable=False,
-                                                verbose_name='آیا این کتاب بازگردانده شده است؟')
 
     def __str__(self):
-        return self.book.title + " | " + self.borrower.username
+        return self.book.title + " | " + self.user.username
 
     class Meta:
         verbose_name = 'واگذاری'
-        verbose_name_plural = 'واگذاری'
-
-    def save(self, *args, **kwargs):
-        if self.date_of_return:
-            self.is_this_book_returned = True
-        super().save(*args, **kwargs)
+        verbose_name_plural = 'واگذاری ها'

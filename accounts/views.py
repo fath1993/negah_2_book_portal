@@ -1,72 +1,151 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import never_cache
 from accounts.models import UserProfile
 from bookshelf.models import Book
+from contact.models import RequestLoan, AvailableDate
 
 
 def login_view(request):
-    context = {}
-    if request.method == 'POST':
+    context = {'page_title': 'صفحه ورود'}
+    if request.method == 'GET':
         if request.user.is_authenticated:
-            return redirect('/')
+            return redirect('bookshelf:home')
+        else:
+            return render(request, 'accounts/sign-in.html', context)
+    else:
+        if request.user.is_authenticated:
+            return redirect('bookshelf:home')
         else:
             username = request.POST['username']
             password = request.POST['password']
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('/')
+                return redirect('bookshelf:home')
             else:
-                return render(request, 'accounts/sign-in.html')
-
-    elif request.method == 'GET':
-        if request.user.is_authenticated:
-            return redirect('/')
-        else:
-            return render(request, 'accounts/sign-in.html')
+                context['err'] = 'نام کاربری یا کلمه عبور صحیح نمی باشد'
+                return render(request, 'accounts/sign-in.html', context)
 
 
 def logout_view(request):
     if request.user.is_authenticated:
         logout(request)
-        return redirect('accounts:login')
-    else:
-        return redirect('bookshelf:home')
+    return redirect('accounts:login')
 
 
 def signup_view(request):
-    context = {}
-    if request.method == 'POST':
+    context = {'page_title': 'صفحه ثبت نام'}
+    if request.method == 'GET':
         if request.user.is_authenticated:
             return redirect('bookshelf:home')
         else:
-            username = request.POST['username']
-            password = request.POST['password']
+            return render(request, 'accounts/sign-up.html', context)
+    else:
+        if request.user.is_authenticated:
+            return redirect('bookshelf:home')
+        else:
+            phone_number = request.POST['phone-number']
             email = request.POST['email']
-            first_name = request.POST['first_name']
-            last_name = request.POST['last_name']
+            full_name = request.POST['full-name']
+            password_1 = request.POST['password-1']
+            password_2 = request.POST['password-2']
 
-            new_user = User.objects.create_user(username=username, email=email, first_name=first_name,
-                                                last_name=last_name, password=password, is_active=True)
+            if phone_number is None:
+                context['err'] = 'شماره همراه صحیح نمی باشد'
+                return render(request, 'accounts/sign-up.html', context)
+            else:
+                try:
+                    user = User.objects.get(username=phone_number)
+                    context['err'] = 'شماره همراه در سامانه موجود می باشد'
+                    return render(request, 'accounts/sign-up.html', context)
+                except:
+                    pass
+
+            if password_1 != password_2:
+                context['err'] = 'کلمات عبور وارد شده یکسان نمی باشند'
+                return render(request, 'accounts/sign-up.html', context)
+
+
+            new_user = User.objects.create_user(username=phone_number, email=email, first_name=full_name,
+                                                password=password_1, is_active=True)
             login(request, new_user)
             return redirect('bookshelf:home')
 
-    elif request.method == 'GET':
-        if request.user.is_authenticated:
-            return redirect('bookshelf:home')
+
+def profile_view(request):
+    context = {'page_title': 'پروفایل کاربری'}
+    if request.user.is_authenticated:
+        if request.method == 'GET':
+            user_profile = UserProfile.objects.get(user=request.user)
+            context['user_profile'] = user_profile
+            return render(request, 'profile.html', context)
         else:
-            return render(request, 'accounts/sign-up.html')
+            pass
+    else:
+        return redirect('accounts:login')
 
 
 def personal_library(request):
-    context = {}
+    context = {'page_title': 'کتاب خانه من'}
+    if request.user.is_authenticated:
+        return render(request, 'personal-library.html', context)
+    else:
+        return redirect('accounts:login')
+
+
+def loan_request_view(request, book_id):
+    context = {'page_title': 'درخواست امانت فیزیکی کتاب'}
+    if request.user.is_authenticated:
+        if request.method == 'GET':
+            user_profile = UserProfile.objects.get(user=request.user)
+            context['user_profile'] = user_profile
+            book = Book.objects.get(id=book_id)
+            context['book'] = book
+            available_dates = AvailableDate.objects.all().order_by('available_date')
+            context['available_dates'] = available_dates
+            return render(request, 'book-request-loan.html', context)
+        else:
+            book = Book.objects.get(id=book_id)
+            date_of_request = request.POST['date']
+            hour = request.POST['hour']
+            description = request.POST['description']
+            new_request_loan = RequestLoan(
+                user=request.user,
+                book=book,
+                date_of_request=date_of_request,
+                hour=hour,
+                description=description,
+            )
+            new_request_loan.save()
+            return redirect('accounts:request-history')
+    else:
+        return redirect('accounts:login')
+
+
+def remove_request_ajax(request):
+    if request.user.is_authenticated:
+        user_id = request.POST['user_id']
+        user = User.objects.get(id=user_id)
+        if user != request.user:
+            return HttpResponse('not allowed')
+        request_id = request.POST['request_id']
+        RequestLoan.objects.get(id=request_id).delete()
+        return HttpResponse('ok!')
+    else:
+        return redirect('accounts:login')
+
+
+def request_history_view(request):
+    context = {'page_title': 'سوابق درخواست ها'}
     if request.user.is_authenticated:
         user_profile = UserProfile.objects.get(user=request.user)
         context['user_profile'] = user_profile
-        return render(request, 'personal-library.html', context)
+        loan_requests = RequestLoan.objects.filter(user=request.user).order_by('-date_of_request')
+        context['loan_requests'] = loan_requests
+        return render(request, 'my-request.html', context)
     else:
         return redirect('accounts:login')
 

@@ -17,8 +17,6 @@ class UserProfileAdmin(admin.ModelAdmin):
     fields = (
         'user',
         'profile_image',
-        'reading_book',
-        'wish_list',
         'notification_box',
         'is_notification_seen',
         'message_box',
@@ -120,35 +118,22 @@ class UserBookStatusAdmin(admin.ModelAdmin):
 @admin.register(UserBookAssign)
 class UserBookAssignAdmin(admin.ModelAdmin):
     list_display = (
-        'book_borrower',
-        'book_title',
-        ('date_of_assignment', JDateFieldListFilter)[0],
-        ('date_of_return', JDateFieldListFilter)[0],
-        'is_this_book_returned',
-
-    )
-
-    search_fields = (
+        'user',
+        'book',
         'date_of_assignment',
-        'borrower__username',
-        'book__title',
+        'date_of_return',
 
     )
-    list_filter = (
-        'date_of_assignment',
-        'is_this_book_returned',
-    )
+
     readonly_fields = (
-        'is_this_book_returned',
         'date_of_assignment',
     )
 
     fields = (
+        'user',
         'book',
-        'borrower',
-        ('date_of_assignment', JDateFieldListFilter)[0],
-        ('date_of_return', JDateFieldListFilter)[0],
-        'is_this_book_returned',
+        'date_of_assignment',
+        'date_of_return',
 
     )
 

@@ -1,0 +1,96 @@
+{% load static %}
+<!doctype html>
+<html lang="en" dir="rtl">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{ page_title }}</title>
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}"/>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <!-- Typography CSS -->
+    <link rel="stylesheet" href="{% static 'css/typography.css' %}">
+    <!-- Style CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link href="{% static 'css/remixicon.css' %}" rel="stylesheet">
+
+    <link href="{% static 'fontawesome-free-6.4.0-web/css/fontawesome.css' %}" rel="stylesheet">
+    <link href="{% static 'fontawesome-free-6.4.0-web/css/brands.css' %}" rel="stylesheet">
+    <link href="{% static 'fontawesome-free-6.4.0-web/css/solid.css' %}" rel="stylesheet">
+
+</head>
+<body>
+<!-- loader Start -->
+<div id="loading">
+    <div id="loading-center">
+    </div>
+</div>
+<!-- loader END -->
+<!-- Wrapper Start -->
+<div class="wrapper">
+    {% include 'extra/sidebar.html' %}
+    {% include 'extra/top-nav-bar.html' %}
+    <!-- Page Content  -->
+    {% block content %}{% endblock %}
+</div>
+<!-- Wrapper END -->
+{% include 'extra/footer.html' %}
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/popper.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+<!-- Appear JavaScript -->
+<script src="{% static 'js/jquery.appear.js' %}"></script>
+<!-- Countdown JavaScript -->
+<script src="{% static 'js/countdown.min.js' %}"></script>
+<!-- Counterup JavaScript -->
+<script src="{% static 'js/waypoints.min.js' %}"></script>
+<script src="{% static 'js/jquery.counterup.min.js' %}"></script>
+<!-- Wow JavaScript -->
+<script src="{% static 'js/wow.min.js' %}"></script>
+<!-- Apexcharts JavaScript -->
+<script src="{% static 'js/apexcharts.js' %}"></script>
+<!-- Slick JavaScript -->
+<script src="{% static 'js/slick.min.js' %}"></script>
+<!-- Select2 JavaScript -->
+<script src="{% static 'js/select2.min.js' %}"></script>
+<!-- Owl Carousel JavaScript -->
+<script src="{% static 'js/owl.carousel.min.js' %}"></script>
+<!-- Magnific Popup JavaScript -->
+<script src="{% static 'js/jquery.magnific-popup.min.js' %}"></script>
+<!-- Smooth Scrollbar JavaScript -->
+<script src="{% static 'js/smooth-scrollbar.js' %}"></script>
+<!-- lottie JavaScript -->
+<script src="{% static 'js/lottie.js' %}"></script>
+<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+<!-- am animated JavaScript -->
+<script src="{% static 'js/animated.js' %}"></script>
+<!-- am kelly JavaScript -->
+<script src="{% static 'js/kelly.js' %}"></script>
+<!-- am maps JavaScript -->
+<script src="{% static 'js/maps.js' %}"></script>
+<!-- am worldLow JavaScript -->
+<script src="{% static 'js/worldLow.js' %}"></script>
+<!-- Raphael-min JavaScript -->
+<script src="{% static 'js/raphael-min.js' %}"></script>
+<!-- Morris JavaScript -->
+<script src="{% static 'js/morris.js' %}"></script>
+<!-- Morris min JavaScript -->
+<script src="{% static 'js/morris.min.js' %}"></script>
+<!-- Flatpicker Js -->
+<script src="{% static 'js/flatpickr.js' %}"></script>
+<!-- Style Customizer -->
+<script src="{% static 'js/style-customizer.js' %}"></script>
+<!-- Chart Custom JavaScript -->
+<script src="{% static 'js/chart-custom.js' %}"></script>
+<!-- Custom JavaScript -->
+<script src="{% static 'js/custom.js' %}"></script>
+</body>
+</html>

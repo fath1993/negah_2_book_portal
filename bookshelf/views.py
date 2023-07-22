@@ -1,283 +1,235 @@
 import threading
+
+import jdatetime
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.http import HttpResponse, FileResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import never_cache
-from accounts.models import UserProfile, UserBookAssign
-from bookshelf.models import Book
+from accounts.models import UserProfile, UserBookAssign, UserBookStatus
+from bookshelf.models import Book, BookProfile, MagicWord
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from contact.models import AvailableDate, RequestLoan
-from website.models import HomePageSliderImage, BooOfTheWeek
+from website.models import HomePageSliderImage, BooOfTheWeek, FeaturedBook
 
 
 def home_view(request):
-    context = {}
+    context = {'page_title': 'صفحه اصلی'}
     if request.user.is_authenticated:
-        books = Book.objects.filter(is_published_on_site=True)[:12]
-        context['books'] = books
-        # featured_books = FeaturedBook.objects.all()
-        # context['featured_books'] = featured_books
-        user_profile = UserProfile.objects.get(user=request.user)
-        context['user_profile'] = user_profile
-        home_page_slider_images = HomePageSliderImage.objects.filter()
-        context['home_page_slider_images'] = home_page_slider_images
-        book_of_the_week = BooOfTheWeek.objects.filter()
-        context['book_of_the_week'] = book_of_the_week
         if request.method == 'GET':
+            book_profiles = BookProfile.objects.filter(is_published_on_site=True)[:12]
+            context['book_profiles'] = book_profiles
+            featured_books = FeaturedBook.objects.filter()
+            if featured_books.count() >= 8:
+                context['featured_books'] = featured_books
+            else:
+                context['featured_books'] = []
+            try:
+                book_of_the_week = BooOfTheWeek.objects.filter().latest('id')
+                context['book_of_the_week'] = book_of_the_week
+            except:
+                pass
+
+            home_page_slider_images = HomePageSliderImage.objects.filter()
+            context['home_page_slider_images'] = home_page_slider_images
+
             return render(request, 'index.html', context)
         else:
-            return HttpResponse('not allowed')
+            return JsonResponse({'message': 'not allowed'})
     else:
         return redirect('accounts:login')
 
 
-def loan_request_view(request, book_id):
-    context = {}
+def filter_view(request):
+    context = {'page_title': 'صفحه دسته بندی و فیلتر کتاب ها'}
     if request.user.is_authenticated:
-        user_profile = UserProfile.objects.get(user=request.user)
-        context['user_profile'] = user_profile
-        book = Book.objects.get(id=book_id)
-        context['book'] = book
-        available_dates = AvailableDate.objects.all().order_by('available_date')
-        context['available_dates'] = available_dates
+        books = []
         if request.method == 'GET':
-            return render(request, 'loan-form.html', context)
+            book_profiles = BookProfile.objects.filter(is_published_on_site=True).order_by('id')
+            for book in book_profiles:
+                books.append(book.book)
+            context['books'] = set(books)
+            magic_words = MagicWord.objects.filter()
+            context['categories'] = magic_words.filter(word_type='category')
+            context['keywords'] = magic_words.filter(word_type='keyword')
+            context['subject'] = magic_words.filter(word_type='subject')
+            return render(request, 'book-filters.html', context)
         else:
-            user = request.user
-            book = Book.objects.get(id=book_id)
-            date_of_request = request.POST['date']
-            hour = request.POST['hour']
-            description = request.POST['description']
-            print(str(user))
-            print(str(date_of_request))
-            print(str(hour))
-            print(str(description))
-            new_request_loan = RequestLoan(
-                user=user,
-                book=book,
-                date_of_request=date_of_request,
-                hour=hour,
-                description=description,
-            )
-            new_request_loan.save()
-            return redirect('/request-history/')
+            try:
+                mark = str(request.POST['mark'])
+                if mark == 'بر اساس':
+                    mark = None
+            except:
+                mark = None
+            try:
+                category = str(request.POST['category'])
+                if category == 'دسته':
+                    category = None
+            except:
+                category = None
+            try:
+                year_of_publish = str(request.POST['year_of_publish'])
+                if year_of_publish == 'سال انتشار':
+                    year_of_publish = None
+            except:
+                year_of_publish = None
+            try:
+                search_text = str(request.POST['search_text'])
+                if search_text == '':
+                    search_text = None
+            except:
+                search_text = None
+            if category is not None:
+                books_by_magic_word = Book.objects.filter(categories__title__icontains=category)
+                for book in books_by_magic_word:
+                    books.append(book)
+            if search_text is not None:
+                books_by_title = Book.objects.filter(title__icontains=search_text)
+                for book in books_by_title:
+                    books.append(book)
+                books_by_authors = Book.objects.filter(authors__full_name__icontains=search_text)
+                for book in books_by_authors:
+                    books.append(book)
+                books_by_interpreters = Book.objects.filter(interpreters__full_name__icontains=search_text)
+                for book in books_by_interpreters:
+                    books.append(book)
+                books_by_publisher = Book.objects.filter(publisher__publisher_name__icontains=search_text)
+                for book in books_by_publisher:
+                    books.append(book)
+                try:
+                    search_text = int(search_text)
+                    books_by_publish_year = Book.objects.filter(publish_year__exact=search_text)
+                    for book in books_by_publish_year:
+                        books.append(book)
+                except:
+                    pass
+                books_by_ISBN = Book.objects.filter(ISBN__exact=search_text)
+                for book in books_by_ISBN:
+                    books.append(book)
+                books_by_summery = Book.objects.filter(summery__icontains=search_text)
+                for book in books_by_summery:
+                    books.append(book)
+            context['books'] = set(books)
+            return render(request, 'book-filters.html', context)
     else:
         return redirect('accounts:login')
-
-
-def request_history_view(request):
-    context = {}
-    if request.user.is_authenticated:
-        user_profile = UserProfile.objects.get(user=request.user)
-        context['user_profile'] = user_profile
-        loan_requests = RequestLoan.objects.filter(user=request.user).order_by('-date_of_request')
-        context['loan_requests'] = loan_requests
-        return render(request, 'my-request.html', context)
-    else:
-        return redirect('accounts:login')
-
-
-def remove_request_ajax(request):
-    if request.user.is_authenticated:
-        user_id = request.POST['user_id']
-        user = User.objects.get(id=user_id)
-        if user != request.user:
-            return HttpResponse('not allowed')
-        request_id = request.POST['request_id']
-        RequestLoan.objects.get(id=request_id).delete()
-        return HttpResponse('ok!')
-    else:
-        return redirect('accounts:login')
-
-
-def paginator_creator(request, paginating_object, context):
-    page = request.GET.get('page', 1)
-    paginator = Paginator(paginating_object, 28)
-    try:
-        paginating_object = paginator.page(page)
-    except PageNotAnInteger:
-        paginating_object = paginator.page(1)
-    except EmptyPage:
-        paginating_object = paginator.page(paginator.num_pages)
-    context['books'] = paginating_object
-
-
-# def categories_view(request):
-#     context = {}
-#     if request.user.is_authenticated:
-#         user_profile = UserProfile.objects.get(user=request.user)
-#         context['user_profile'] = user_profile
-#         books = Book.objects.filter(is_published_on_site=True).order_by('id')
-#         all_categories = Category.objects.all()
-#         context['all_categories'] = all_categories
-#         if request.method == 'GET':
-#             paginator_creator(request, books, context)
-#             return render(request, 'category.html', context)
-#         elif request.method == 'POST':
-#             # publisher = str(request.POST['publisher'])
-#             # keyword = str(request.POST['keyword'])
-#             # if publisher == 'انتشارات':
-#             #     publisher = None
-#             # if keyword == 'کلید واژه':
-#             #     keyword = None
-#
-#             try:
-#                 mark = str(request.POST['mark'])
-#                 if mark == 'بر اساس':
-#                     mark = None
-#             except:
-#                 mark = None
-#
-#             try:
-#                 category = str(request.POST['category'])
-#                 if category == 'دسته':
-#                     category = None
-#             except:
-#                 category = None
-#             try:
-#                 year_of_publish = str(request.POST['year_of_publish'])
-#                 if year_of_publish == 'سال انتشار':
-#                     year_of_publish = None
-#             except:
-#                 year_of_publish = None
-#             try:
-#                 search_text = str(request.POST['search_text'])
-#                 if search_text == '':
-#                     search_text = None
-#             except:
-#                 search_text = None
-#
-#             if category is not None and year_of_publish is None and search_text is None:
-#                 books = Book.objects.filter(
-#                     Q(is_published_on_site=True) &
-#                     Q(categories__category_name__icontains=category)
-#                 )
-#                 paginator_creator(request, books, context)
-#             elif category is not None and year_of_publish is not None and search_text is None:
-#                 books = Book.objects.filter(
-#                     Q(is_published_on_site=True) &
-#                     Q(categories__category_name__icontains=category) &
-#                     Q(date_of_publish__icontains=year_of_publish)
-#                 )
-#                 paginator_creator(request, books, context)
-#             elif category is not None and year_of_publish is not None and search_text is not None:
-#                 books = Book.objects.filter(
-#                     Q(is_published_on_site=True) &
-#                     Q(categories__category_name__icontains=category) &
-#                     Q(date_of_publish__icontains=year_of_publish) &
-#                     Q(title__icontains=search_text) |
-#                     Q(summery__icontains=search_text) |
-#                     Q(ISBN__icontains=search_text) |
-#                     Q(authors__person__person_name__icontains=search_text) |
-#                     Q(interpreters__person__person_name__icontains=search_text)
-#                 )
-#                 paginator_creator(request, books, context)
-#             elif category is None and year_of_publish is None and search_text is not None:
-#                 books = Book.objects.filter(
-#                     Q(is_published_on_site=True) &
-#                     Q(title__icontains=search_text) |
-#                     Q(summery__icontains=search_text) |
-#                     Q(ISBN__icontains=search_text) |
-#                     Q(authors__person__person_name__icontains=search_text) |
-#                     Q(interpreters__person__person_name__icontains=search_text)
-#                 )
-#                 paginator_creator(request, books, context)
-#             elif search_text is not None and category is not None and year_of_publish is None:
-#                 books = Book.objects.filter(
-#                     Q(is_published_on_site=True) &
-#                     Q(categories__category_name__icontains=category) &
-#                     Q(title__icontains=search_text) |
-#                     Q(summery__icontains=search_text) |
-#                     Q(ISBN__icontains=search_text) |
-#                     Q(authors__person__person_name__icontains=search_text) |
-#                     Q(interpreters__person__person_name__icontains=search_text)
-#                 )
-#                 paginator_creator(request, books, context)
-#             elif search_text is not None and year_of_publish is not None and category is None:
-#                 books = Book.objects.filter(
-#                     Q(is_published_on_site=True) &
-#                     Q(date_of_publish__icontains=year_of_publish) &
-#                     Q(title__icontains=search_text) |
-#                     Q(summery__icontains=search_text) |
-#                     Q(ISBN__icontains=search_text) |
-#                     Q(authors__person__person_name__icontains=search_text) |
-#                     Q(interpreters__person__person_name__icontains=search_text)
-#                 )
-#                 paginator_creator(request, books, context)
-#
-#             elif year_of_publish is not None and search_text is None and category is None:
-#                 books = Book.objects.filter(
-#                     Q(is_published_on_site=True) &
-#                     Q(date_of_publish__year=year_of_publish)
-#                 )
-#                 paginator_creator(request, books, context)
-#
-#             else:
-#                 if mark is None:
-#                     books = Book.objects.filter(is_published_on_site=True)
-#                     print(books)
-#                 elif mark == 'دفعات مشاهده':
-#                     books = BookVisitedNumber.objects.all().order_by('visited_number')[:40]
-#                     context['unusual'] = True
-#                 elif mark == 'امتیاز منتقدان':
-#                     books = Book.objects.filter(is_published_on_site=True)
-#                 elif mark == 'امتیاز کاربران سایت':
-#                     books = Book.objects.filter(is_published_on_site=True)
-#
-#                 paginator_creator(request, books, context)
-#             return render(request, 'category.html', context)
-#     else:
-#         return redirect('accounts:login')
 
 
 def book_view(request, book_id, book_name):
     context = {}
     if request.user.is_authenticated:
-        user_profile = UserProfile.objects.get(user=request.user)
-        context['user_profile'] = user_profile
+
         book = Book.objects.get(id=book_id)
-        book.visited_by_users.add(request.user)
-        book.save()
-        BookVisitThread(book).start()
-        book_assign_history = UserBookAssign.objects.filter(book=book)
-        context['book_is_available_for_loan'] = True
-        for book_history in book_assign_history:
-            if not book_history.is_this_book_returned:
-                context['book_is_available_for_loan'] = False
         context['book'] = book
-        tags = book.keywords.all()
-        tag_list = []
-        for tag in tags:
-            tag_list.append(tag.id)
-        similar_books = Book.objects.filter()
-        context['similar_books'] = similar_books
-        return render(request, 'book-page.html', context)
+
+        context['page_title'] = 'کتاب ' + book.title
+
+        BookVisitThread(request, book).start()
+
+        book_number_of_inventory = BookProfile.objects.get(book=book).number_of_inventory
+        book_assign_status = UserBookAssign.objects.filter(book=book, date_of_return=None)
+        if book_number_of_inventory > book_assign_status.count():
+            context['book_is_available_for_loan'] = True
+
+        try:
+            user_book_status = UserBookStatus.objects.get(user=request.user, book=book)
+            context['is_Wished'] = user_book_status.is_Wished
+            context['is_liked'] = user_book_status.is_liked
+        except:
+            pass
+        return render(request, 'book-detail.html', context)
     else:
         return redirect('accounts:login')
 
 
+def ajax_add_book_to_wish_list(request):
+    book_id = request.POST['book_id']
+    book = Book.objects.get(id=book_id)
+    try:
+        user_book_status = UserBookStatus.objects.get(user=request.user, book=book)
+        user_book_status.is_Wished = True
+        user_book_status.wish_time = jdatetime.datetime.now()
+        user_book_status.save()
+    except:
+        user_book_status = UserBookStatus(
+            user=request.user,
+            book=book,
+            is_Wished=True,
+            wish_time=jdatetime.datetime.now(),
+        )
+        user_book_status.save()
+    return JsonResponse({'message': 'ok'})
+
+
+def ajax_remove_book_from_wish_list(request):
+    book_id = request.POST['book_id']
+    book = Book.objects.get(id=book_id)
+    try:
+        user_book_status = UserBookStatus.objects.get(user=request.user, book=book)
+        user_book_status.is_Wished = False
+        user_book_status.wish_time = None
+        user_book_status.save()
+    except:
+        user_book_status = UserBookStatus(
+            user=request.user,
+            book=book,
+            is_Wished=False,
+            wish_time=None,
+        )
+        user_book_status.save()
+    return JsonResponse({'message': 'ok'})
+
+
+def ajax_add_book_to_liked_list(request):
+    book_id = request.POST['book_id']
+    book = Book.objects.get(id=book_id)
+    try:
+        user_book_status = UserBookStatus.objects.get(user=request.user, book=book)
+        user_book_status.is_liked = True
+        user_book_status.like_time = jdatetime.datetime.now()
+        user_book_status.save()
+    except:
+        user_book_status = UserBookStatus(
+            user=request.user,
+            book=book,
+            is_liked=True,
+            like_time=jdatetime.datetime.now(),
+        )
+        user_book_status.save()
+    return JsonResponse({'message': 'ok'})
+
+
+def ajax_remove_book_from_liked_list(request):
+    book_id = request.POST['book_id']
+    book = Book.objects.get(id=book_id)
+    try:
+        user_book_status = UserBookStatus.objects.get(user=request.user, book=book)
+        user_book_status.is_liked = False
+        user_book_status.like_time = None
+        user_book_status.save()
+    except:
+        user_book_status = UserBookStatus(
+            user=request.user,
+            book=book,
+            is_liked=False,
+            like_time=None,
+        )
+        user_book_status.save()
+    return JsonResponse({'message': 'ok'})
+
+
 class BookVisitThread(threading.Thread):
-    def __init__(self, book):
+    def __init__(self, request, book):
         threading.Thread.__init__(self)
+        self.request = request
         self.book = book
 
     def run(self):
         try:
-            # number_of_visit = self.book.visited_by_users.all().count()
-            # try:
-            #     old_book_visited_number = BookVisitedNumber.objects.get(book=self.book)
-            #     old_book_visited_number.visited_number = number_of_visit
-            #     old_book_visited_number.save()
-            #     return True
-            # except:
-            #     new_book_visited_number = BookVisitedNumber(
-            #         book=self.book,
-            #         visited_number=number_of_visit,
-            #     )
-            #     new_book_visited_number.save()
-            #     return True
-            pass
+            book_profile = BookProfile.objects.get(book=self.book)
+            book_profile.visited_by_users.add(self.request.user)
+            book_profile.save()
+            return True
         except Exception as e:
             print('object is busy. err: ' + str(e), 'd')
             return False
@@ -290,10 +242,13 @@ def pdf_reader(request, book_id, t):
         context['user_profile'] = user_profile
         book = Book.objects.get(id=book_id)
         context['book'] = book
-        if t == 0:
+        if str(t) == '0':
             context['type'] = 'demo'
-        elif t == 1:
+            context['page_title'] = 'مطالعه دموی کتاب ' + book.title
+        elif str(t) == '1':
+            print(t)
             context['type'] = 'src'
+            context['page_title'] = 'مطالعه کامل کتاب ' + book.title
         return render(request, 'book-pdf.html', context)
     else:
         return redirect('accounts:login')
@@ -323,6 +278,8 @@ def book_audio(request, book_id, book_name=None):
         context['user_profile'] = user_profile
         book = Book.objects.get(id=book_id)
         context['book'] = book
+
+        context['page_title'] = 'گوش دادن کامل کتاب صوتی ' + book.title
         return render(request, 'book-audio.html', context)
     else:
         return redirect('accounts:login')

@@ -1,32 +1,7 @@
+{% extends 'accounts/base.html' %}
 {% load static %}
-<!doctype html>
-<html lang="en" dir="rtl">
-<head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>وب اوپس کتابخانه شما</title>
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}"/>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <!-- Typography CSS -->
-    <link rel="stylesheet" href="{% static 'css/typography.css' %}">
-    <!-- Style CSS -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <!-- Responsive CSS -->
-    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-    <script src="{% static 'fontawesomefree/js/all.min.js' %}"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
-</head>
-<body>
-<!-- loader Start -->
-<div id="loading">
-    <div id="loading-center">
-    </div>
-</div>
-<!-- loader END -->
-<!-- Sign in Start -->
+
+{% block content %}
 <section class="sign-in-page">
     <div class="container p-0">
         <div class="row no-gutters height-self-center">
@@ -39,36 +14,35 @@
                             <form class="mt-4 form-text" action="{% url 'accounts:signup' %}" method="post">
                                 {% csrf_token %}
                                 <div class="form-group">
-                                    <label for="exampleInputEmail1">نام</label>
-                                    <input type="text" class="form-control mb-0" name="first_name"
-                                           placeholder="نام">
+                                    <label for="phone-number">شماره همراه</label>
+                                    <input type="text" class="form-control mb-0" name="phone-number" id="phone-number"
+                                           placeholder="شماره همراه" autocomplete="new-password" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="exampleInputEmail1">نام خانوادگی</label>
-                                    <input type="text" class="form-control mb-0" name="last_name"
-                                           placeholder="نام خانوادگی">
+                                    <label for="email">آدرس ایمیل</label>
+                                    <input type="email" class="form-control mb-0" name="email" id="email"
+                                           placeholder="ایمیل" autocomplete="new-password">
                                 </div>
                                 <div class="form-group">
-                                    <label for="exampleInputUserName">یوزر نیم</label>
-                                    <input type="text" class="form-control mb-0" name="username"
-                                           placeholder="Enter email">
+                                    <label for="full-name">نام و نام خانوادگی</label>
+                                    <input type="text" class="form-control mb-0" name="full-name" id="full-name"
+                                           placeholder="نام و نام خانوادگی" autocomplete="new-password">
                                 </div>
                                 <div class="form-group">
-                                    <label for="exampleInputEmail2">آدرس ایمیل</label>
-                                    <input type="email" class="form-control mb-0" name="email"
-                                           placeholder="ایمیل">
+                                    <label for="password-1">کلمه عبور</label>
+                                    <input type="password" class="form-control mb-0" name="password-1" id="password-1"
+                                           placeholder="کلمه عبور" autocomplete="new-password" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="exampleInputPassword1">کلمه عبور</label>
-                                    <input type="password" class="form-control mb-0" name="password"
-                                           placeholder="کلمه عبور">
+                                    <label for="password-2">تکرار کلمه عبور</label>
+                                    <input type="password" class="form-control mb-0" name="password-2" id="password-2"
+                                           placeholder="تکرار کلمه عبور" autocomplete="new-password" required>
                                 </div>
-{#                                <div class="d-inline-block w-100">#}
-{#                                    <div class="custom-control custom-checkbox d-inline-block mt-2 pt-1">#}
-{#                                        <input type="checkbox" class="custom-control-input" name="accept_conditions">#}
-{#                                        <label class="custom-control-label" for="customCheck1">قوانین را خوانده و تایید می کنم</label>#}
-{#                                    </div>#}
-{#                                </div>#}
+                                {% if err %}
+                                <div class="form-group text-center text-danger">
+                                    <strong>{{ err }}</strong>
+                                </div>
+                                {% endif %}
                                 <div class="sign-info text-center">
                                     <button type="submit" class="btn btn-white d-block w-100 mb-2">ثبت نام</button>
                                     <span class="text-dark d-inline-block line-height-2">آیا حساب کاربری دارید؟ <a
@@ -82,41 +56,4 @@
         </div>
     </div>
 </section>
-<!-- Sign in END -->
-
-<!-- Optional JavaScript -->
-<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-<script src="{% static 'js/jquery.min.js' %}"></script>
-<script src="{% static 'js/popper.min.js' %}"></script>
-<script src="{% static 'js/bootstrap.min.js' %}"></script>
-<!-- Appear JavaScript -->
-<script src="{% static 'js/jquery.appear.js' %}"></script>
-<!-- Countdown JavaScript -->
-<script src="{% static 'js/countdown.min.js' %}"></script>
-<!-- Counterup JavaScript -->
-<script src="{% static 'js/waypoints.min.js' %}"></script>
-<script src="{% static 'js/jquery.counterup.min.js' %}"></script>
-<!-- Wow JavaScript -->
-<script src="{% static 'js/wow.min.js' %}"></script>
-<!-- lottie JavaScript -->
-<script src="{% static 'js/lottie.js' %}"></script>
-<!-- Apexcharts JavaScript -->
-<script src="{% static 'js/apexcharts.js' %}"></script>
-<!-- Slick JavaScript -->
-<script src="{% static 'js/slick.min.js' %}"></script>
-<!-- Select2 JavaScript -->
-<script src="{% static 'js/select2.min.js' %}"></script>
-<!-- Owl Carousel JavaScript -->
-<script src="{% static 'js/owl.carousel.min.js' %}"></script>
-<!-- Magnific Popup JavaScript -->
-<script src="{% static 'js/jquery.magnific-popup.min.js' %}"></script>
-<!-- Smooth Scrollbar JavaScript -->
-<script src="{% static 'js/smooth-scrollbar.js' %}"></script>
-<!-- Style Customizer -->
-<script src="{% static 'js/style-customizer.js' %}"></script>
-<!-- Chart Custom JavaScript -->
-<script src="{% static 'js/chart-custom.js' %}"></script>
-<!-- Custom JavaScript -->
-<script src="{% static 'js/custom.js' %}"></script>
-</body>
-</html>
+{% endblock %}

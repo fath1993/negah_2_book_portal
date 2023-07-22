@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div id="content-page" class="content-page">
+        <div class="container-fluid">
+            <div class="row profile-content">
+                <div class="col-12 col-md-12 col-lg-12">
+                    <div class="iq-card">
+                        <div class="iq-card-body profile-page">
+                            <div class="profile-header">
+                                <div class="cover-container text-center">
+                                    {% if user_profile.profile_image %}
+                                    <img src="{{ user_profile.profile_image.url}}" alt="profile-bg" class="rounded-circle img-fluid">
+                                    {% else %}
+                                    <img src="{% static 'custom/profile.png' %}" alt="profile-bg" class="rounded-circle img-fluid">
+                                    {% endif %}
+                                    <div class="profile-detail mt-3">
+                                        {% if user_profile.user.first_name %}
+                                        <h3>{{ user_profile.user.first_name }}</h3>
+                                        {% else %}
+                                        <h3>{{ user_profile.user.username }}</h3>
+                                        {% endif %}
+                                        {% if request.user.is_superuser %}
+                                        <p class="text-primary">مدیر کل</p>
+                                        {% elif request.user.is_staff %}
+                                        <p class="text-primary">ادمین</p>
+                                        {% else %}
+                                        <p class="text-primary">کاربر</p>
+                                        {% endif %}
+                                        <p></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="iq-card">
+                        <div class="iq-card-header d-flex justify-content-between align-items-center mb-0">
+                            <div class="iq-header-title">
+                                <h4 class="card-title mb-0">اطلاعات کاربری</h4>
+                            </div>
+                        </div>
+                        <div class="iq-card-body">
+                            <ul class="list-inline p-0 mb-0">
+                                <li>
+                                    <div class="row align-items-center justify-content-between mb-3">
+                                        <div class="col-sm-6">
+                                            <h6>شماره موبایل</h6>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-0">{{ request.user.username }}</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="row align-items-center justify-content-between mb-3">
+                                        <div class="col-sm-6">
+                                            <h6>ایمیل</h6>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-0">{{ request.user.email }}</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="row align-items-center justify-content-between mb-3">
+                                        <div class="col-sm-6">
+                                            <h6>نام و نام خانوادگی</h6>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-0">{{ request.user.first_name }}</p>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

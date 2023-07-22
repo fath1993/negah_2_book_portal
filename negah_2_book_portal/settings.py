@@ -18,8 +18,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'django_jalali',
-    'fontawesomefree',
     'tinymce',
+    # 'ip_logs',
     'file_gallery',
     'accounts',
     'bookshelf',
@@ -39,6 +39,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'negah_2_book_portal.middlewares.user_ip.UserIpMiddleware'
 ]
 
 ROOT_URLCONF = 'negah_2_book_portal.urls'

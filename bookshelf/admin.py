@@ -46,6 +46,7 @@ class MagicWordAdmin(admin.ModelAdmin):
 class PublisherAdmin(admin.ModelAdmin):
     list_display = (
         'publisher_name',
+        'publisher_address',
     )
 
     fields = (
@@ -103,12 +104,13 @@ class BookProfileAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'book',
+        'number_of_inventory',
+        'is_published_on_site',
     )
 
     readonly_fields = (
         'id',
         'book',
-        'visited_number',
     )
 
     fields = (
@@ -119,9 +121,8 @@ class BookProfileAdmin(admin.ModelAdmin):
         'audio_source',
         'audio_speaker',
         'review',
-        'visited_number',
         'visited_by_users',
-        'is_physical_available',
+        'number_of_inventory',
         'is_published_on_site',
     )
 
