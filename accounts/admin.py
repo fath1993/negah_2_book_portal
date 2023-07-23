@@ -1,13 +1,12 @@
 from django.contrib import admin
-from django_jalali.admin.filters import JDateFieldListFilter
-
-from accounts.models import UserProfile, Notification, PrivateMessage, Message, UserBookAssign, UserBookStatus
+from accounts.models import UserProfile, Message, UserBookAssign, UserBookStatus
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
         'user',
+        'is_message_seen',
     )
 
     search_fields = (
@@ -17,9 +16,6 @@ class UserProfileAdmin(admin.ModelAdmin):
     fields = (
         'user',
         'profile_image',
-        'notification_box',
-        'is_notification_seen',
-        'message_box',
         'is_message_seen',
         'specific_book_only_for_this_user',
     )
@@ -28,53 +24,23 @@ class UserProfileAdmin(admin.ModelAdmin):
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
     list_display = (
-        'message',
-        ('time', JDateFieldListFilter)[0],
+        'content',
+        'created_at_display',
     )
+
     readonly_fields = (
-        'time',
-    )
-    fields = (
-        'message',
-        ('time', JDateFieldListFilter)[0],
-    )
-
-
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
-    list_display = (
-        'receivers_name',
-        'notification',
-    )
-
-    fields = (
-        'notification',
-    )
-
-    @admin.display(description="کاربران دریافت کننده", empty_value='???')
-    def receivers_name(self, obj):
-        return 'همه'
-
-
-@admin.register(PrivateMessage)
-class PrivateMessageAdmin(admin.ModelAdmin):
-    list_display = (
-        'receivers_name',
-        'private_message',
+        'created_at',
     )
 
     fields = (
         'users',
-        'private_message',
+        'content',
+        'created_at',
     )
 
-    @admin.display(description="کاربران دریافت کننده", empty_value='???')
-    def receivers_name(self, obj):
-        list_names = ''
-        for user in obj.users.all():
-            list_names = list_names + ", " + str(user.username)
-        return list_names
-
+    @admin.display(description="تاریخ ایجاد", empty_value='???')
+    def created_at_display(self, obj):
+        return obj.created_at.strftime('%Y-%m-%d %H:%M')
 
 
 @admin.register(UserBookStatus)
@@ -83,35 +49,38 @@ class UserBookStatusAdmin(admin.ModelAdmin):
         'user',
         'book',
         'is_reading',
-        'is_finished',
-        'is_Wished',
-        'is_liked',
+        'reading_started_at',
+        # 'is_finished',
+        # 'is_Wished',
+        # 'is_liked',
     )
 
     readonly_fields = (
         'user',
         'book',
         'is_reading',
-        'last_page',
-        'is_finished',
-        'finish_time',
-        'is_Wished',
-        'wish_time',
-        'is_liked',
-        'like_time',
+        'reading_started_at',
+        # 'last_page',
+        # 'is_finished',
+        # 'finish_time',
+        # 'is_Wished',
+        # 'wish_time',
+        # 'is_liked',
+        # 'like_time',
     )
 
     fields = (
         'user',
         'book',
         'is_reading',
-        'last_page',
-        'is_finished',
-        'finish_time',
-        'is_Wished',
-        'wish_time',
-        'is_liked',
-        'like_time',
+        'reading_started_at',
+        # 'last_page',
+        # 'is_finished',
+        # 'finish_time',
+        # 'is_Wished',
+        # 'wish_time',
+        # 'is_liked',
+        # 'like_time',
     )
 
 
@@ -120,8 +89,8 @@ class UserBookAssignAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'book',
-        'date_of_assignment',
-        'date_of_return',
+        'date_of_assignment_display',
+        'date_of_return_display',
 
     )
 
@@ -137,10 +106,10 @@ class UserBookAssignAdmin(admin.ModelAdmin):
 
     )
 
-    @admin.display(description="نام کتاب", empty_value='???')
-    def book_title(self, obj):
-        return obj.book.title
+    @admin.display(description="تاریخ امانت گرفتن", empty_value='???')
+    def date_of_assignment_display(self, obj):
+        return obj.date_of_assignment.strftime('%Y-%m-%d %H:%M')
 
-    @admin.display(description="نام قرض گیرنده", empty_value='???')
-    def book_borrower(self, obj):
-        return obj.borrower.username
+    @admin.display(description="تاریخ بازگردانی", empty_value='???')
+    def date_of_return_display(self, obj):
+        return obj.date_of_return.strftime('%Y-%m-%d %H:%M')

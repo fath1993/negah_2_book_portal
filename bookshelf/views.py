@@ -231,27 +231,43 @@ class BookVisitThread(threading.Thread):
             book_profile.save()
             return True
         except Exception as e:
-            print('object is busy. err: ' + str(e), 'd')
+            print(str(e))
             return False
 
 
 def pdf_reader(request, book_id, t):
     context = {}
     if request.user.is_authenticated:
-        user_profile = UserProfile.objects.get(user=request.user)
-        context['user_profile'] = user_profile
         book = Book.objects.get(id=book_id)
         context['book'] = book
         if str(t) == '0':
             context['type'] = 'demo'
             context['page_title'] = 'مطالعه دموی کتاب ' + book.title
         elif str(t) == '1':
-            print(t)
             context['type'] = 'src'
             context['page_title'] = 'مطالعه کامل کتاب ' + book.title
+            AddBookToReadingStateThread(request, book).start()
         return render(request, 'book-pdf.html', context)
     else:
         return redirect('accounts:login')
+
+
+class AddBookToReadingStateThread(threading.Thread):
+    def __init__(self, request, book):
+        threading.Thread.__init__(self)
+        self.request = request
+        self.book = book
+
+    def run(self):
+        try:
+            user_book_status = UserBookStatus.objects.get(user=self.request.user, book=self.book)
+            user_book_status.is_reading = True
+            user_book_status.reading_started_at = jdatetime.datetime.now()
+            user_book_status.save()
+            return True
+        except Exception as e:
+            print(str(e))
+            return False
 
 
 @never_cache

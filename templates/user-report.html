@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div id="content-page" class="content-page">
+    <div class="container-fluid checkout-content">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="iq-card">
+                    <div class="iq-card-header d-flex justify-content-between iq-border-bottom mb-0">
+                        <div class="iq-header-title">
+                            <h4 class="card-title">گزارش</h4>
+                        </div>
+                    </div>
+                    <div class="iq-card-body">
+                        <ul class="list-inline p-0 m-0">
+                            <li class="checkout-product">
+                                <div class="row align-items-center">
+                                    <div class="col-sm-9 col-lg-9">
+                                        <form action="{% url 'accounts:user-report-view' %}" method="post">
+                                            {% csrf_token %}
+                                            <h5>فرمت صحیح ورودی بر اساس تاریخ شمسی به ترتیب روز - ماه - سال: xxxx-xx-xx</h5>
+                                            <br>
+                                            <div class="col-md-12 form-group">
+                                                <label for="enter_date_1"> تاریخ شروع تحلیل نتایج </label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text cursor-pointer" id="enter_date">انتخاب تاریخ</span>
+                                                    </div>
+                                                    <input type="text" name="from-date" id="from-date" class="form-control form-group"
+                                                           aria-label="enter_date" aria-describedby="enter_date" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 form-group">
+                                                <label for="exit_date_1"> تاریخ پایان تحلیل نتایج </label>
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text cursor-pointer" id="exit_date">انتخاب تاریخ</span>
+                                                    </div>
+                                                    <input type="text" name="to-date" id="to-date" class="form-control form-group"
+                                                           aria-label="exit_date"
+                                                           aria-describedby="exit_date" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12 form-group">
+                                                <button class="button btn btn-success mt-3" type="submit">اعمال فیلتر</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="col-sm-6 col-lg-6">
+                                        <div class="row">
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="iq-card">
+                    <div class="iq-card-header d-flex justify-content-between iq-border-bottom mb-0">
+                        <div class="iq-header-title">
+                            <h4 class="card-title">نتایج گزارش تا تاریخ: <span>{{ today }}</span></h4>
+                        </div>
+                    </div>
+                    <div class="iq-card-body">
+                        <ul class="list-inline p-0 m-0">
+                            <li class="checkout-product">
+                                <div class="row align-items-center">
+                                    <div class="col-sm-12 col-lg-12">
+                                        {% if not custom_range %}
+                                        <table class="table table-bordered table-responsive-md table-striped text-center">
+                                            <thead>
+                                            <tr>
+                                                <th style="width:20%">موضوع</th>
+                                                <th style="width:20%">کاربر</th>
+                                                <th style="width:15%">سه ماهه</th>
+                                                <th style="width:15%">شش ماهه</th>
+                                                <th style="width:15%">نه ماهه</th>
+                                                <th style="width:15%">دوازده ماهه</th>
+                                            </tr>
+                                            </thead>
+                                            {% for report in user_book_report %}
+                                            <tbody>
+                                            <tr>
+                                                <td>تعداد کتاب های امانت گرفته شده</td>
+                                                <td>{{ report.0.username }}</td>
+                                                <td>{{ report.1 }}</td>
+                                                <td>{{ report.2 }}</td>
+                                                <td>{{ report.3 }}</td>
+                                                <td>{{ report.4 }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>تعداد کتاب های اضافه شده به کتابخانه</td>
+                                                <td>{{ report.0.username }}</td>
+                                                <td>{{ report.5 }}</td>
+                                                <td>{{ report.6 }}</td>
+                                                <td>{{ report.7 }}</td>
+                                                <td>{{ report.8 }}</td>
+                                            </tr>
+                                            </tbody>
+                                            {% empty %}
+                                            <tbody>
+                                            <tr>
+                                                <td>خالی</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                            </tbody>
+                                            {% endfor %}
+                                        </table>
+                                        {% else %}
+                                        <table class="table table-bordered table-responsive-md table-striped text-center">
+                                            <thead>
+                                            <tr>
+                                                <th style="width:30%">موضوع</th>
+                                                <th style="width:30%">کاربر</th>
+                                                <th style="width:40%"><span>از تاریخ: <span> {{ from_date }} </span></span><span>تا تاریخ: <span> {{ to_date }} </span></span></th>
+                                            </tr>
+                                            </thead>
+                                            {% for report in user_book_report %}
+                                            <tbody>
+                                            <tr>
+                                                <td>تعداد کتاب های امانت گرفته شده</td>
+                                                <td>{{ report.0.username }}</td>
+                                                <td>{{ report.1 }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>تعداد کتاب های اضافه شده به کتابخانه</td>
+                                                <td>{{ report.0.username }}</td>
+                                                <td>{{ report.2 }}</td>
+                                            </tr>
+                                            </tbody>
+                                            {% empty %}
+                                            <tbody>
+                                            <tr>
+                                                <td>خالی</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                            </tbody>
+                                            {% endfor %}
+                                        </table>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

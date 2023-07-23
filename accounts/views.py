@@ -1,9 +1,13 @@
+import re
+import jdatetime
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.cache import never_cache
-from accounts.models import UserProfile
+from text_unidecode import unidecode
+
+from accounts.models import UserProfile, UserBookStatus, Message, UserBookAssign
 from bookshelf.models import Book
 from contact.models import RequestLoan, AvailableDate
 
@@ -68,7 +72,6 @@ def signup_view(request):
                 context['err'] = 'کلمات عبور وارد شده یکسان نمی باشند'
                 return render(request, 'accounts/sign-up.html', context)
 
-
             new_user = User.objects.create_user(username=phone_number, email=email, first_name=full_name,
                                                 password=password_1, is_active=True)
             login(request, new_user)
@@ -91,6 +94,8 @@ def profile_view(request):
 def personal_library(request):
     context = {'page_title': 'کتاب خانه من'}
     if request.user.is_authenticated:
+        user_book_status = UserBookStatus.objects.filter(user=request.user)
+        context['reading_books'] = user_book_status.filter(is_reading=True)
         return render(request, 'personal-library.html', context)
     else:
         return redirect('accounts:login')
@@ -150,58 +155,14 @@ def request_history_view(request):
         return redirect('accounts:login')
 
 
-@never_cache
-def ajax_add_book_to_profile(request):
-    if request.user.is_authenticated:
-        try:
-            print(0)
-            book_id = request.POST['book_id']
-            print(book_id)
-            book = Book.objects.get(id=book_id)
-            user_profile = UserProfile.objects.get(user=request.user)
-            try:
-                old_reading_book = user_profile.reading_book.get(user=request.user, book=book)
-                old_reading_book.last_page = 0
-                old_reading_book.save()
-                print('old_reading_book')
-            except Exception as e:
-                # new_reading_book = BookReadingHistory(
-                #     user=request.user,
-                #     book=book,
-                # )
-                # new_reading_book.save()
-                # user_profile.reading_book.add(new_reading_book)
-                user_profile.save()
-                print('new_reading_book')
-        except Exception as e:
-            print(str(e))
-            return HttpResponse(str(e))
-        return HttpResponse('Ok')
-    else:
-        return redirect('accounts:login')
-
-
-@never_cache
-def ajax_remove_book_from_profile(request):
+def ajax_remove_book_from_reading_state(request):
     if request.user.is_authenticated:
         book_id = request.POST['book_id']
-        print(book_id)
         book = Book.objects.get(id=book_id)
-        user_profile = UserProfile.objects.get(user=request.user)
-        user_profile.reading_book.get(user=request.user, book=book).delete()
-        user_profile.save()
-        return HttpResponse('Ok')
-    else:
-        return redirect('accounts:login')
-
-
-@never_cache
-def ajax_add_notification_to_read_group(request):
-    if request.user.is_authenticated:
-        user_profile = UserProfile.objects.get(user=request.user)
-        user_profile.is_notification_seen = True
-        user_profile.save()
-        return HttpResponse('Ok')
+        user_book_status = UserBookStatus.objects.get(user=request.user, book=book)
+        user_book_status.is_reading = False
+        user_book_status.save()
+        return JsonResponse({'message': 'ok'})
     else:
         return redirect('accounts:login')
 
@@ -215,3 +176,222 @@ def ajax_add_message_to_read_group(request):
         return HttpResponse('Ok')
     else:
         return redirect('accounts:login')
+
+
+def ajax_user_message_state(request):
+    messages = Message.objects.filter(users__exact=request.user)[:5]
+    json_response_body = {
+        'is_message_seen': request.user.userprofile.is_message_seen,
+        'message_has_seen_at': str(request.user.userprofile.message_has_seen_at),
+
+    }
+
+    messages_dict = {}
+    i = 0
+    for message in messages:
+        messages_dict[i] = {
+            'content': message.content,
+            'created_at': str(message.created_at.strftime('%Y-%m-%d %H:%M'))
+        }
+        i += 1
+    json_response_body['messages'] = messages_dict
+    return JsonResponse(json_response_body)
+
+
+def user_report_view(request):
+    context = {'page_title': 'گزارشات آماری'}
+    if request.user.is_authenticated:
+        context['custom_range'] = False
+        if request.method == 'GET':
+            context['today'] = jdatetime.datetime.now().date()
+            users = User.objects.all()
+            users_book_assign = UserBookAssign.objects.all()
+            user_book_status = UserBookStatus.objects.all()
+
+            now = jdatetime.datetime.now()
+            this_year = now.year
+            this_month = now.month
+            user_book_report = []
+            date_form = jdatetime.datetime(year=this_year, month=1, day=1)
+            for user in users:
+                if 1 < this_month < 3:
+                    user_book_report.append([user, users_book_assign.filter(user=user,
+                                                                            date_of_assignment__range=[
+                                                                                date_form,
+                                                                                now]).count(), '-',
+                                             '-', '-', user_book_status.filter(user=user,
+                                                                               reading_started_at__range=[
+                                                                                   date_form,
+                                                                                   now]).count(), '-',
+                                             '-', '-'])
+
+
+                elif 3 < this_month < 6:
+                    date_3_month_to = jdatetime.datetime(year=this_year, month=3, day=31)
+                    user_book_report.append([user, users_book_assign.filter(user=user,
+                                                                            date_of_assignment__range=[
+                                                                                date_form,
+                                                                                date_3_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          now]).count(),
+                                             '-', '-', user_book_status.filter(user=user,
+                                                                               reading_started_at__range=[
+                                                                                   date_form,
+                                                                                   date_3_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         now]).count(),
+                                             '-', '-'])
+
+                elif 6 < this_month < 9:
+                    date_3_month_to = jdatetime.datetime(year=this_year, month=3, day=31)
+                    date_6_month_to = jdatetime.datetime(year=this_year, month=6, day=31)
+                    user_book_report.append([user, users_book_assign.filter(user=user,
+                                                                            date_of_assignment__range=[
+                                                                                date_form,
+                                                                                date_3_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          date_6_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          now]).count(), '-',
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_3_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_6_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         now]).count()
+                                                , '-'])
+
+
+                elif 9 < this_month < 12:
+                    date_3_month_to = jdatetime.datetime(year=this_year, month=3, day=31)
+                    date_6_month_to = jdatetime.datetime(year=this_year, month=6, day=31)
+                    date_9_month_to = jdatetime.datetime(year=this_year, month=9, day=30)
+                    user_book_report.append([user, users_book_assign.filter(user=user,
+                                                                            date_of_assignment__range=[
+                                                                                date_form,
+                                                                                date_3_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          date_6_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          date_9_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          now]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_3_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_6_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_9_month_to]).count()
+                                                , user_book_status.filter(user=user,
+                                                                          reading_started_at__range=[
+                                                                              date_form,
+                                                                              now]).count()])
+
+
+
+
+                elif this_month == 12:
+                    date_3_month_to = jdatetime.datetime(year=this_year, month=3, day=31)
+                    date_6_month_to = jdatetime.datetime(year=this_year, month=6, day=31)
+                    date_9_month_to = jdatetime.datetime(year=this_year, month=9, day=30)
+                    date_12_month_to = jdatetime.datetime(year=this_year, month=12, day=30)
+                    user_book_report.append([user, users_book_assign.filter(user=user,
+                                                                            date_of_assignment__range=[
+                                                                                date_form,
+                                                                                date_3_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          date_6_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          date_9_month_to]).count(),
+                                             users_book_assign.filter(user=user,
+                                                                      date_of_assignment__range=[
+                                                                          date_form,
+                                                                          date_12_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_3_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_6_month_to]).count(),
+                                             user_book_status.filter(user=user,
+                                                                     reading_started_at__range=[
+                                                                         date_form,
+                                                                         date_9_month_to]).count()
+                                                , user_book_status.filter(user=user,
+                                                                          reading_started_at__range=[
+                                                                              date_form,
+                                                                              date_12_month_to]).count()])
+
+                context['user_book_report'] = user_book_report
+        else:
+            context['custom_range'] = True
+            from_date = request.POST['from-date']
+            to_date = request.POST['to-date']
+            context['from_date'] = from_date
+            context['to_date'] = to_date
+            try:
+                print(date_extractor(from_date))
+                print(date_extractor(to_date))
+            except Exception as e:
+                print('except' + str(e))
+            users = User.objects.all()
+            users_book_assign = UserBookAssign.objects.all()
+            user_book_status = UserBookStatus.objects.all()
+            user_book_report = []
+            for user in users:
+                user_book_report.append([user, users_book_assign.filter(user=user,
+                                                                        date_of_assignment__range=[
+                                                                            from_date,
+                                                                            to_date]).count(),
+                                         user_book_status.filter(user=user,
+                                                                 reading_started_at__range=[
+                                                                     from_date,
+                                                                     to_date]).count()])
+
+            context['user_book_report'] = user_book_report
+        return render(request, 'user-report.html', context)
+    else:
+        return redirect('accounts:login')
+
+
+def date_extractor(string):
+    to_standard_unicode = unidecode(string)
+    string_date = re.findall(r'(\d+-\d+-\d+)', to_standard_unicode)
+    remove_slash = string_date[0].replace("-", " ")
+    separation = remove_slash.split()
+    year = separation[0]
+    month = separation[1]
+    day = separation[2]
+    return jdatetime.date(year=int(year), month=int(month), day=int(day))

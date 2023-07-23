@@ -1,0 +1,17 @@
+Django
+Pillow
+asgiref
+django-admin-interface
+django-colorfield
+django-environ
+django-jalali
+django-tinymce
+jalali
+jdatetime
+pip
+python-slugify
+setuptools
+sqlparse
+text-unidecode
+tzdata
+wheel
